@@ -1,0 +1,18 @@
+[tool.poetry]
+name = "ambramelin"
+version = "0.1.0"
+description = "CLI for commonly-used Ambra operations"
+authors = ["palisand <p9alisand@gmail.com>"]
+
+[tool.poetry.dependencies]
+python = "^3.9"
+ambra-sdk = "^3.21.5"
+
+[tool.poetry.dev-dependencies]
+
+[tool.poetry.scripts]
+ambra = "ambramelin.main:cli"
+
+[build-system]
+requires = ["poetry-core>=1.0.0"]
+build-backend = "poetry.core.masonry.api"
