@@ -7,6 +7,19 @@ This can be thought of as an opinionated CLI wrapper around the [Ambra SDK](http
 
 ## Quickstart
 
+### Installation
+
+1. Clone this repository
+2. Install dependencies: `poetry install`
+
+TODO:
+* homebrew formula
+* [executable](https://packaging.python.org/overview/#bringing-your-own-python-executable)
+
+### Usage
+
+Before you can use the `ambra` command, you must `poetry shell`.
+
 Add a user:
 
 ```
