@@ -22,6 +22,10 @@ class Config(TypedDict):
     users: dict[str, User]
 
 
+def get_empty_config() -> Config:
+    return {"current": None, "envs": {}, "users": {}}
+
+
 def load_config() -> Config:
     file = Path("config.json")  # TODO: belongs elsewhere: ~/.ambramelin/config
 
@@ -29,10 +33,10 @@ def load_config() -> Config:
         with file.open("r") as f:
             return json.loads(f.read())
 
-    return {"current": None, "envs": {}, "users": {}}
+    return get_empty_config()
 
 
-def set_config(config: Config) -> None:
+def save_config(config: Config) -> None:
     file = Path("config.json")
 
     with file.open("w") as f:
@@ -43,7 +47,7 @@ def set_config(config: Config) -> None:
 def update_config() -> ContextManager[Config]:
     config = load_config()
     yield config
-    set_config(config)
+    save_config(config)
 
 
 def envs_added(config: Config) -> bool:

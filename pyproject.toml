@@ -9,6 +9,8 @@ python = "^3.9"
 ambra-sdk = "^3.21.5"
 
 [tool.poetry.dev-dependencies]
+pytest = "^6.2.4"
+pytest-mock = "^3.6.1"
 
 [tool.poetry.scripts]
 ambra = "ambramelin.main:cli"
