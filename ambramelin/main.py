@@ -47,8 +47,9 @@ def cli() -> None:
 
     parser_user = subparsers.add_parser("user")
     parser_user_subparsers = parser_user.add_subparsers(dest="subcmd")
-
-    parser_user_add = parser_user_subparsers.add_parser("add")
+    parser_user_add = parser_user_subparsers.add_parser(
+        "add", formatter_class=argparse.ArgumentDefaultsHelpFormatter
+    )
     parser_user_add.add_argument("name", type=str)
     parser_user_add.add_argument(
         "--creds",
@@ -65,7 +66,9 @@ def cli() -> None:
 
     parser_user_subparsers.add_parser("list")
 
-    parser_user_set = parser_user_subparsers.add_parser("set")
+    parser_user_set = parser_user_subparsers.add_parser(
+        "set", formatter_class=argparse.ArgumentDefaultsHelpFormatter
+    )
     parser_user_set.add_argument("name", type=str, choices=users)
     parser_user_set.add_argument(
         "--creds",
@@ -86,10 +89,23 @@ def cli() -> None:
     parser_study_get.add_argument("uuid", type=str)
     parser_study_get.add_argument("--fields", type=str, nargs="+")
 
-    parser_study_download = parser_study_subparsers.add_parser("download")
+    parser_study_download = parser_study_subparsers.add_parser(
+        "download", formatter_class=argparse.ArgumentDefaultsHelpFormatter
+    )
     parser_study_download.add_argument("uuid", type=str)
-    parser_study_download.add_argument("dest", type=str)
-    parser_study_download.add_argument("--bundle", type=str, default="dicom")
+    parser_study_download.add_argument(
+        "--dest", type=str, default="{uuid}.zip", help="destination"
+    )
+    parser_study_download.add_argument(
+        "--bundle",
+        type=str,
+        default="dicom",
+        choices=['dicom', 'iso', 'osx', 'win'],
+        help="bundle type"
+    )
+    parser_study_download.add_argument(
+        "--chunk-size", type=int, default=512, help="chunk size in bytes"
+    )
 
     parser_study_list = parser_study_subparsers.add_parser("list")
     parser_study_list.add_argument("filter", type=str, help="field.condition.value")

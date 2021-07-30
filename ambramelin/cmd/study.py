@@ -22,8 +22,11 @@ def _get_storage_args(api: Api, uuid: str) -> tuple[str, str, str]:
 def cmd_download(args: argparse.Namespace) -> None:
     api = get_api()
 
-    # TODO: stream to file (see if possible without chunks)
-    api.Storage.Study.download(*_get_storage_args(api, args.uuid), bundle=args.bundle)
+    with open(args.dest.format(uuid=args.uuid), mode="wb") as f:
+        for chunk in api.Storage.Study.download(
+            *_get_storage_args(api, args.uuid), bundle=args.bundle
+        ).iter_content(args.chunk_size):
+            f.write(chunk)
 
 
 def cmd_get(args: argparse.Namespace) -> None:
