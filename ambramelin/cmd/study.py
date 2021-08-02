@@ -1,6 +1,7 @@
 import argparse
 import json
 import sys
+from pathlib import Path
 
 from ambra_sdk.api import Api
 from ambra_sdk.service.filtering import Filter, FilterCondition
@@ -21,12 +22,21 @@ def _get_storage_args(api: Api, uuid: str) -> tuple[str, str, str]:
 
 def cmd_download(args: argparse.Namespace) -> None:
     api = get_api()
+    path = Path(args.dest.format(uuid=args.uuid))
+    print(f"Downloading study to {path.resolve()}")
 
-    with open(args.dest.format(uuid=args.uuid), mode="wb") as f:
+    with open(path, mode="wb") as f:
+        bytes_downloaded = 0
         for chunk in api.Storage.Study.download(
             *_get_storage_args(api, args.uuid), bundle=args.bundle
         ).iter_content(args.chunk_size):
             f.write(chunk)
+            # a progress bar would be nice, but the response does not contain the size
+            # of the bundle a study JSON's 'size' refers to the uncompressed size :(
+            bytes_downloaded += len(chunk)
+            print(f"{bytes_downloaded:,} bytes downloaded", end="\r")
+
+    print()  # ensure 'bytes downloaded' shown after loop completion
 
 
 def cmd_get(args: argparse.Namespace) -> None:

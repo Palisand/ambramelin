@@ -23,7 +23,7 @@ Before you can use the `ambra` command, you must `poetry shell`.
 Add a user:
 
 ```
-abmra user add user@domain.com
+ambra user add user@domain.com
 ```
 
 > You will be prompted for a password which will be stored in your keychain.
