@@ -7,6 +7,7 @@ from ambra_sdk.api import Api
 from ambra_sdk.service.filtering import Filter, FilterCondition
 
 from ambramelin.util.errors import InvalidFilterConditionError
+from ambramelin.util.input import bool_prompt
 from ambramelin.util.output import pprint_json
 from ambramelin.util.sdk import get_api
 
@@ -31,8 +32,10 @@ def cmd_download(args: argparse.Namespace) -> None:
             *_get_storage_args(api, args.uuid), bundle=args.bundle
         ).iter_content(args.chunk_size):
             f.write(chunk)
-            # a progress bar would be nice, but the response does not contain the size
-            # of the bundle a study JSON's 'size' refers to the uncompressed size :(
+            # a progress bar would be nice, but (1) the response does not contain the
+            # size of the bundle (no Content-Length header or similar) and (2) a study's
+            # 'size', as it exists in a /study/get response, refers to the uncompressed
+            # size :(
             bytes_downloaded += len(chunk)
             print(f"{bytes_downloaded:,} bytes downloaded", end="\r")
 
@@ -54,7 +57,7 @@ def cmd_list(args: argparse.Namespace) -> None:
     if args.fields is None:
         print("Not specifying 'fields' may produce a lot of output.")
 
-        if input("Do you wish to proceed? [y/n]: ").lower() == "n":
+        if not bool_prompt("Do you wish to proceed?"):
             sys.exit(0)
 
     query = api.Study.list(
