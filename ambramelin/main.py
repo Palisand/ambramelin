@@ -8,10 +8,8 @@ from ambramelin.util.config import load_config
 from ambramelin.util.errors import AmbramelinError
 
 
-# TODO: auto-generate documentation
-
-
 def cli() -> None:
+    # TODO: auto-generate documentation
     config = load_config()
     envs = tuple(config["envs"]) or None
     users = tuple(config["users"]) or None

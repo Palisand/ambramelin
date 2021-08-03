@@ -25,15 +25,15 @@ def mock_pprint_json(mocker: MockerFixture) -> None:
 
 
 @pytest.fixture(autouse=True)
-def mock_get_storage_args(mocker: MockerFixture) -> None:
-    mocker.patch(
+def mock_get_storage_args(mocker: MockerFixture) -> MagicMock:
+    return mocker.patch(
         "ambramelin.cmd.study._get_storage_args",
         return_value=("engine_fqdn", "storage_namespace", "study_uuid"),
     )
 
 
 class TestDownload:
-    def test_success(self, mock_api: MagicMock):
+    def test_success(self, mock_api: MagicMock, mock_get_storage_args: MagicMock):
         uuid = str(uuid4())
 
         def iter_content(chunk_size: int) -> Iterator[bytes]:
@@ -54,6 +54,7 @@ class TestDownload:
                 )
             )
 
+            mock_get_storage_args.assert_called_once_with(mock_api, uuid)
             mock_api.Storage.Study.download.assert_called_once_with(
                 "engine_fqdn", "storage_namespace", "study_uuid", bundle="dicom"
             )
@@ -136,13 +137,20 @@ class TestList:
 class TestSchema:
     @pytest.mark.parametrize("extended", (True, False))
     @pytest.mark.parametrize("attachments_only", (True, False))
-    def test_success(self, mock_api: MagicMock, extended: bool, attachments_only: bool):
+    def test_success(
+        self,
+        mock_api: MagicMock,
+        mock_get_storage_args: MagicMock,
+        extended: bool,
+        attachments_only: bool,
+    ):
         uuid = str(uuid4())
         cmd_schema(
             argparse.Namespace(
                 uuid=uuid, extended=extended, attachments_only=attachments_only
             )
         )
+        mock_get_storage_args.assert_called_once_with(mock_api, uuid)
         mock_api.Storage.Study.schema.assert_called_once_with(
             "engine_fqdn",
             "storage_namespace",
