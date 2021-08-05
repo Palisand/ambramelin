@@ -83,6 +83,11 @@ def cli() -> None:
     parser_study = subparsers.add_parser("study")
     parser_study_subparsers = parser_study.add_subparsers(dest="subcmd")
 
+    parser_study_count = parser_study_subparsers.add_parser("count")
+    parser_study_count.add_argument(
+        "filters", type=str, nargs="+", help="field.condition.value"
+    )
+
     parser_study_get = parser_study_subparsers.add_parser("get")
     parser_study_get.add_argument("uuid", type=str)
     parser_study_get.add_argument("--fields", type=str, nargs="+")
@@ -106,7 +111,9 @@ def cli() -> None:
     )
 
     parser_study_list = parser_study_subparsers.add_parser("list")
-    parser_study_list.add_argument("filter", type=str, help="field.condition.value")
+    parser_study_list.add_argument(
+        "filters", type=str, nargs="+", help="field.condition.value"
+    )
     parser_study_list.add_argument("--fields", type=str, nargs="+")
 
     parser_study_schema = parser_study_subparsers.add_parser("schema")

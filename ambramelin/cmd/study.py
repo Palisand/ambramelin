@@ -5,6 +5,7 @@ from pathlib import Path
 
 from ambra_sdk.api import Api
 from ambra_sdk.service.filtering import Filter, FilterCondition
+from ambra_sdk.service.query import QueryOF
 
 from ambramelin.util.errors import InvalidFilterConditionError
 from ambramelin.util.input import bool_prompt
@@ -19,6 +20,34 @@ def _get_storage_args(api: Api, uuid: str) -> tuple[str, str, str]:
         fields=json.dumps(["engine_fqdn", "storage_namespace", "study_uid"])
     ).get()
     return study["engine_fqdn"], study["storage_namespace"], study["study_uid"]
+
+
+def _augment_query_with_filters(query: QueryOF, query_filters: list[str]) -> QueryOF:
+    for query_filter in query_filters:
+        field, cond, val = query_filter.split(".", 2)
+
+        try:
+            cond = FilterCondition(cond)
+        except ValueError:
+            raise InvalidFilterConditionError(cond)
+
+        if cond in {FilterCondition.in_condition, FilterCondition.in_or_null}:
+            val = json.dumps(val.split(","))
+
+        query = query.filter_by(Filter(field, FilterCondition(cond), val))
+
+    return query
+
+
+def cmd_count(args: argparse.Namespace) -> None:
+    api = get_api()
+
+    query = api.Study.count()
+
+    if args.filters is not None:
+        query = _augment_query_with_filters(query, args.filters)
+
+    print(query.get()["count"])
 
 
 def cmd_download(args: argparse.Namespace) -> None:
@@ -64,18 +93,8 @@ def cmd_list(args: argparse.Namespace) -> None:
         fields=args.fields and json.dumps(args.fields)
     )
 
-    if args.filter is not None:
-        field, cond, val = args.filter.split(".")
-
-        try:
-            cond = FilterCondition(cond)
-        except ValueError:
-            raise InvalidFilterConditionError(cond)
-
-        if cond in {FilterCondition.in_condition, FilterCondition.in_or_null}:
-            val = json.dumps(val.split(","))
-
-        query = query.filter_by(Filter(field, FilterCondition(cond), val))
+    if args.filters is not None:
+        query = _augment_query_with_filters(query, args.filters)
 
     pprint_json(list(query.all()))
 
