@@ -1,4 +1,5 @@
 import argparse
+import json
 import sys
 
 from importlib import import_module
@@ -107,7 +108,7 @@ def cli() -> None:
         help="bundle type"
     )
     parser_study_download.add_argument(
-        "--chunk-size", type=int, default=512, help="chunk size in bytes"
+        "--chunk-size", type=int, default=1_000_000, help="chunk size in bytes"
     )
 
     parser_study_list = parser_study_subparsers.add_parser("list")
@@ -129,10 +130,19 @@ def cli() -> None:
         locals()[f"parser_{args.cmd}"].print_usage()
     else:
         try:
-            getattr(
+            result = getattr(
                 import_module(f"ambramelin.cmd.{args.cmd}"), f"cmd_{args.subcmd}"
             )(args)
         except AmbramelinError as e:
             # TODO: option for showing stacktrace (dev mode)
             print(e)
             sys.exit(1)
+        else:
+            assert result is None or isinstance(result, (str, list, dict)), (
+                "cmd_* must return a str, list, dict, or None"
+            )
+
+            if isinstance(result, str):
+                print(result)
+            elif isinstance(result, (list, dict)):
+                print(json.dumps(result, indent=1))

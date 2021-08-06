@@ -1,3 +1,4 @@
+import copy
 from unittest.mock import MagicMock
 
 import pytest
@@ -15,15 +16,17 @@ def mock_api(mocker: MockerFixture) -> MagicMock:
 @pytest.fixture(autouse=True)
 def config(mocker: MockerFixture, request: SubRequest) -> Config:
     try:
-        _config = request.param
+        _config = copy.deepcopy(request.param)
     except AttributeError:
         _config = get_empty_config()
 
-    mocker.patch("ambramelin.util.config.load_config", return_value=_config)
+    mocker.patch(
+        "ambramelin.util.config.load_config", return_value=copy.deepcopy(_config)
+    )
 
     def save_config(config: Config) -> None:
         nonlocal _config
-        _config = config
+        _config.update(**config)
 
     mocker.patch("ambramelin.util.config.save_config", new=save_config)
 

@@ -17,7 +17,7 @@ from ambramelin.util.errors import (
     NoUsersError,
     UserNotFoundError,
 )
-from ambramelin.util.output import pprint_json
+from ambramelin.util.output import MSG_NO_ENV_SELECTED, MSG_NO_ENVS_ADDED
 
 
 def _check_envs_added_and_env_exists(config: Config, name: str) -> None:
@@ -28,7 +28,7 @@ def _check_envs_added_and_env_exists(config: Config, name: str) -> None:
         raise EnvironmentNotFoundError(name, config)
 
 
-def cmd_add(args: argparse.Namespace) -> None:
+def cmd_add(args: argparse.Namespace) -> dict:
     with update_config() as config:
 
         if env_exists(config, args.name):
@@ -43,16 +43,16 @@ def cmd_add(args: argparse.Namespace) -> None:
 
         config["envs"][args.name] = {"url": args.url, "user": args.user}
 
-    pprint_json({args.name: config["envs"][args.name]})
+    return {args.name: config["envs"][args.name]}
 
 
-def cmd_current(_) -> None:
+def cmd_current(_) -> str:
     config = load_config()
 
     if env_selected(config):
-        print(config["current"])
+        return config["current"]
     else:
-        print("No environment selected.")
+        return MSG_NO_ENV_SELECTED
 
 
 def cmd_del(args: argparse.Namespace) -> None:
@@ -66,18 +66,22 @@ def cmd_del(args: argparse.Namespace) -> None:
             config["current"] = None
 
 
-def cmd_list(_) -> None:
+def cmd_list(_) -> str:
     config = load_config()
 
     if envs_added(config):
+        envs = []
+
         for name, props in config["envs"].items():
             prefix = "[CURRENT] " if config["current"] == name else ""
-            print(f"{prefix}{name}: {props['url']}")
+            envs.append(f"{prefix}{name}: {props['url']}")
+
+        return "\n".join(envs)
     else:
-        print("No environments added.")
+        return MSG_NO_ENVS_ADDED
 
 
-def cmd_set(args: argparse.Namespace) -> None:
+def cmd_set(args: argparse.Namespace) -> dict:
     with update_config() as config:
 
         _check_envs_added_and_env_exists(config, args.name)
@@ -86,9 +90,15 @@ def cmd_set(args: argparse.Namespace) -> None:
             config["envs"][args.name]["url"] = args.url
 
         if args.user is not None:
+            if not users_added(config):
+                raise NoUsersError()
+
+            if not user_exists(config, args.user):
+                raise UserNotFoundError(args.user, config)
+
             config["envs"][args.name]["user"] = args.user
 
-    pprint_json({args.name: config["envs"][args.name]})
+    return {args.name: config["envs"][args.name]}
 
 
 def cmd_use(args: argparse.Namespace) -> None:
