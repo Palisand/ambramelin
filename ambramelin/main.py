@@ -108,7 +108,7 @@ def cli() -> None:
         help="bundle type"
     )
     parser_study_download.add_argument(
-        "--chunk-size", type=int, default=1_000_000, help="chunk size in bytes"
+        "--chunk-size", type=int, default=4096, help="chunk size in bytes"
     )
 
     parser_study_list = parser_study_subparsers.add_parser("list")

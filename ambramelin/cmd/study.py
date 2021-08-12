@@ -39,7 +39,7 @@ def _augment_query_with_filters(query: QueryOF, query_filters: list[str]) -> Que
     return query
 
 
-def cmd_count(args: argparse.Namespace) -> None:
+def cmd_count(args: argparse.Namespace) -> str:
     api = get_api()
 
     query = api.Study.count()
@@ -47,7 +47,7 @@ def cmd_count(args: argparse.Namespace) -> None:
     if args.filters is not None:
         query = _augment_query_with_filters(query, args.filters)
 
-    print(query.get()["count"])
+    return str(query.get()["count"])
 
 
 def cmd_download(args: argparse.Namespace) -> None:
@@ -80,7 +80,7 @@ def cmd_get(args: argparse.Namespace) -> None:
     )
 
 
-def cmd_list(args: argparse.Namespace) -> None:
+def cmd_list(args: argparse.Namespace) -> list:
     api = get_api()
 
     if args.fields is None:
@@ -96,7 +96,7 @@ def cmd_list(args: argparse.Namespace) -> None:
     if args.filters is not None:
         query = _augment_query_with_filters(query, args.filters)
 
-    pprint_json(list(query.all()))
+    return list(query.all())
 
 
 def cmd_schema(args: argparse.Namespace) -> None:

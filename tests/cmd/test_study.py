@@ -9,7 +9,42 @@ import pytest
 from ambra_sdk.service.filtering import FilterCondition, Filter
 from pytest_mock import MockerFixture
 
-from ambramelin.cmd.study import cmd_get, cmd_download, cmd_list, cmd_schema
+from ambramelin.cmd import study
+from ambramelin.util.errors import InvalidFilterConditionError
+
+filter_params = (
+    "filters_arg,filters",
+    (
+        (None, None),
+        (
+            ["field.equals.val"],
+            (Filter("field", FilterCondition.equals, "val"),),
+        ),
+        (
+            ["field.in.val"],
+            (Filter("field", FilterCondition.in_condition, '["val"]'),),
+        ),
+        (
+            ["field.in.val1,val2"],
+            (Filter("field", FilterCondition.in_condition, '["val1", "val2"]'),),
+        ),
+        (
+            ["field.in_or_null.val"],
+            (Filter("field", FilterCondition.in_or_null, '["val"]'),),
+        ),
+        (
+            ["field.in_or_null.val1,val2"],
+            (Filter("field", FilterCondition.in_or_null, '["val1", "val2"]'),),
+        ),
+        (
+            ["field.equals.val", "field.in.val1,val2"],
+            (
+                Filter("field", FilterCondition.equals, "val"),
+                Filter("field", FilterCondition.in_or_null, '["val1", "val2"]'),
+            ),
+        )
+    )
+)
 
 
 @pytest.fixture(autouse=True)
@@ -32,8 +67,51 @@ def mock_get_storage_args(mocker: MockerFixture) -> MagicMock:
     )
 
 
+class TestCount:
+    @pytest.mark.parametrize(*filter_params)
+    def test_success(
+        self,
+        mocker: MockerFixture,
+        mock_api: MagicMock,
+        filters_arg: Optional[tuple[str]],
+        filters: list[Filter],
+    ):
+        if filters_arg is None:
+            mock_query_count = MagicMock()
+            mock_api.Study.count.return_value = mock_query_count
+            mock_query_count.get.return_value = {"count": 0}
+        else:
+            mock_query = MagicMock()
+            mocker.patch.object(
+                study, "_augment_query_with_filters", return_value=mock_query
+            )
+            mock_query.get.return_value = {"count": 1}
+
+        result = study.cmd_count(argparse.Namespace(filters=filters_arg))
+
+        mock_api.Study.count.assert_called_once_with()
+
+        if filters_arg is None:
+            assert result == "0"
+        else:
+            mock_api.Study.count().filter_by.mock_calls = [
+                mocker.call(f) for f in filters
+            ]
+            assert result == "1"
+
+    def test_failure_invalid_filter_condition(self, mocker: MockerFixture) -> None:
+        mocker.patch.object(FilterCondition, "__init__", side_effect=ValueError)
+
+        with pytest.raises(InvalidFilterConditionError):
+            study.cmd_count(
+                argparse.Namespace(fields=None, filters=["field.cond.val"])
+            )
+
+
 class TestDownload:
-    def test_success(self, mock_api: MagicMock, mock_get_storage_args: MagicMock):
+    def test_success(
+        self, mock_api: MagicMock, mock_get_storage_args: MagicMock
+    ) -> None:
         uuid = str(uuid4())
 
         def iter_content(chunk_size: int) -> Iterator[bytes]:
@@ -45,7 +123,7 @@ class TestDownload:
         mock_api.Storage.Study.download.return_value = mock_response
 
         with TemporaryDirectory() as dirname:
-            cmd_download(
+            study.cmd_download(
                 argparse.Namespace(
                     dest=f"{dirname}/{{uuid}}.zip",
                     uuid=uuid,
@@ -72,10 +150,13 @@ class TestGet:
         )
     )
     def test_success(
-        self, mock_api: MagicMock, fields_arg: Optional[list[str]], fields: Optional[str]
+        self,
+        mock_api: MagicMock,
+        fields_arg: Optional[list[str]],
+        fields: Optional[str],
     ) -> None:
         uuid = str(uuid4())
-        cmd_get(argparse.Namespace(uuid=uuid, fields=fields_arg))
+        study.cmd_get(argparse.Namespace(uuid=uuid, fields=fields_arg))
         mock_api.Study.get.assert_called_once_with(uuid=uuid, fields=fields)
         mock_api.Study.get().get.assert_called_once_with()
 
@@ -83,7 +164,7 @@ class TestGet:
 class TestList:
     @pytest.fixture(autouse=True)
     def mock_bool_prompt(self, mocker: MockerFixture) -> None:
-        mocker.patch("ambramelin.cmd.study.bool_prompt", return_value=True)
+        mocker.patch.object(study, "bool_prompt", return_value=True)
 
     @pytest.mark.parametrize(
         "fields_arg,fields",
@@ -92,46 +173,48 @@ class TestList:
             (["field1", "field2"], '["field1", "field2"]'),
         )
     )
-    @pytest.mark.parametrize(
-        "filter_arg,filter",
-        (
-            (None, None),
-            (
-                "field.equals.val",
-                Filter("field", FilterCondition.equals, "val"),
-            ),
-            (
-                "field.in.val",
-                Filter("field", FilterCondition.in_condition, '["val"]'),
-            ),
-            (
-                "field.in.val1,val2",
-                Filter("field", FilterCondition.in_condition, '["val1", "val2"]'),
-            ),
-            (
-                "field.in_or_null.val",
-                Filter("field", FilterCondition.in_or_null, '["val"]')
-            ),
-            (
-                "field.in_or_null.val1,val2",
-                Filter("field", FilterCondition.in_or_null, '["val1", "val2"]')
-            ),
-        )
-    )
+    @pytest.mark.parametrize(*filter_params)
     def test_success(
         self,
+        mocker: MockerFixture,
         mock_api: MagicMock,
         fields_arg: list[str],
         fields: Optional[str],
-        filter_arg: Optional[str],
-        filter: Filter
+        filters_arg: Optional[tuple[str]],
+        filters: list[Filter],
     ) -> None:
-        cmd_list(argparse.Namespace(fields=fields_arg, filter=filter_arg))
+        if filters_arg is None:
+            mock_query_list = MagicMock()
+            mock_api.Study.list.return_value = mock_query_list
+            mock_query_list.all.return_value = ("unfiltered", "results")
+        else:
+            mock_query = MagicMock()
+            mocker.patch.object(
+                study, "_augment_query_with_filters", return_value=mock_query
+            )
+            mock_query.all.return_value = ("filtered", "results")
+
+        result = study.cmd_list(
+            argparse.Namespace(fields=fields_arg, filters=filters_arg)
+        )
 
         mock_api.Study.list.assert_called_once_with(fields=fields)
 
-        if filter_arg is not None:
-            mock_api.Study.list().filter_by.assert_called_once_with(filter)
+        if filters_arg is None:
+            assert result == ["unfiltered", "results"]
+        else:
+            mock_api.Study.list().filter_by.mock_calls = [
+                mocker.call(f) for f in filters
+            ]
+            assert result == ["filtered", "results"]
+
+    def test_failure_invalid_filter_condition(self, mocker: MockerFixture) -> None:
+        mocker.patch.object(FilterCondition, "__init__", side_effect=ValueError)
+
+        with pytest.raises(InvalidFilterConditionError):
+            study.cmd_list(
+                argparse.Namespace(fields=None, filters=["field.cond.val"])
+            )
 
 
 class TestSchema:
@@ -143,9 +226,9 @@ class TestSchema:
         mock_get_storage_args: MagicMock,
         extended: bool,
         attachments_only: bool,
-    ):
+    ) -> None:
         uuid = str(uuid4())
-        cmd_schema(
+        study.cmd_schema(
             argparse.Namespace(
                 uuid=uuid, extended=extended, attachments_only=attachments_only
             )
