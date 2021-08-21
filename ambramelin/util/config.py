@@ -22,22 +22,28 @@ class Config(TypedDict):
     users: dict[str, User]
 
 
-def get_empty_config() -> Config:
+def _get_empty_config() -> Config:
     return {"current": None, "envs": {}, "users": {}}
 
 
+def _get_config_path() -> Path:
+    # TODO: belongs elsewhere: e.g. ~/.ambramelin/config
+    #  allow for specifying via global --config option and AMBRAMELIN_CONFIG_PATH envvar
+    return Path("config.json")
+
+
 def load_config() -> Config:
-    file = Path("config.json")  # TODO: belongs elsewhere: ~/.ambramelin/config
+    file = _get_config_path()
 
     if file.exists():
         with file.open("r") as f:
             return json.loads(f.read())
 
-    return get_empty_config()
+    return _get_empty_config()
 
 
 def save_config(config: Config) -> None:
-    file = Path("config.json")
+    file = _get_config_path()
 
     with file.open("w") as f:
         f.write(json.dumps(config, indent=2))

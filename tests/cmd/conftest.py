@@ -6,7 +6,7 @@ from _pytest.fixtures import SubRequest
 from pytest_mock import MockerFixture
 
 from ambramelin.util import config as util_config
-from ambramelin.util.config import Config, get_empty_config
+from ambramelin.util.config import Config, _get_empty_config
 from ambra_sdk import api
 
 
@@ -20,7 +20,7 @@ def config(mocker: MockerFixture, request: SubRequest) -> Config:
     try:
         _config = copy.deepcopy(request.param)
     except AttributeError:
-        _config = get_empty_config()
+        _config = _get_empty_config()
 
     mocker.patch.object(util_config, "load_config", return_value=copy.deepcopy(_config))
 
