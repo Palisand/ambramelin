@@ -15,7 +15,11 @@ from ambramelin.util.errors import (
     UserAlreadyExistsError,
     UserNotFoundError,
 )
-from ambramelin.util.output import pprint_json
+from ambramelin.util.output import (
+    MSG_NO_ENV_SELECTED,
+    MSG_NO_USERS_ADDED,
+    MSG_NO_USER_FOR_CURR_ENV,
+)
 
 
 def _check_users_added_and_user_exists(config: Config, name: str) -> None:
@@ -26,7 +30,7 @@ def _check_users_added_and_user_exists(config: Config, name: str) -> None:
         raise UserNotFoundError(name, config)
 
 
-def cmd_add(args: argparse.Namespace) -> None:
+def cmd_add(args: argparse.Namespace) -> dict:
     with update_config() as config:
 
         if user_exists(config, args.name):
@@ -35,19 +39,19 @@ def cmd_add(args: argparse.Namespace) -> None:
         credentials.managers[args.creds].set_password(args.name, getpass())
         config["users"][args.name] = {"credentials_manager": args.creds}
 
-    pprint_json({args.name: config["users"][args.name]})
+    return {args.name: config["users"][args.name]}
 
 
-def cmd_current(_) -> None:
+def cmd_current(_) -> str:
     config = load_config()
 
     if env_selected(config):
         if user := config["envs"][config["current"]]["user"]:
-            print(user)
+            return user
         else:
-            print(f"No user for current environment ({config['current']}).")
+            return MSG_NO_USER_FOR_CURR_ENV.format(env=config["current"])
     else:
-        print("No environment selected.")
+        return MSG_NO_ENV_SELECTED
 
 
 def cmd_del(args: argparse.Namespace) -> None:
@@ -66,23 +70,26 @@ def cmd_del(args: argparse.Namespace) -> None:
                 config["envs"][name]["user"] = None
 
 
-def cmd_list(_) -> None:
+def cmd_list(_) -> str:
     config = load_config()
 
-    if users := config["users"]:
-        for name in users:
+    if users_added(config):
+        users = []
 
+        for name in config["users"]:
             if config["current"] and config["envs"][config["current"]]["user"] == name:
                 prefix = "[CURRENT] "
             else:
                 prefix = ""
 
-            print(f"{prefix}{name}")
+            users.append(f"{prefix}{name}")
+
+        return "\n".join(users)
     else:
-        print("No users added.")
+        return MSG_NO_USERS_ADDED
 
 
-def cmd_set(args: argparse.Namespace) -> None:
+def cmd_set(args: argparse.Namespace) -> dict:
     with update_config() as config:
 
         _check_users_added_and_user_exists(config, args.name)
@@ -103,4 +110,4 @@ def cmd_set(args: argparse.Namespace) -> None:
             cred_manager.del_password(args.name)
             cred_manager.set_password(args.name, password)
 
-    pprint_json({args.name: config["users"][args.name]})
+    return {args.name: config["users"][args.name]}

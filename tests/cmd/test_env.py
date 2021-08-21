@@ -28,7 +28,7 @@ class TestAdd:
             {
                 "current": None,
                 "envs": {},
-                "users": {"username": {"credential_manager": "keychain"}},
+                "users": {"username": {"credentials_manager": "keychain"}},
             },
         ),
         indirect=True,
@@ -41,7 +41,7 @@ class TestAdd:
         assert config == {
             "current": None,
             "envs": result,
-            "users": {"username": {"credential_manager": "keychain"}},
+            "users": {"username": {"credentials_manager": "keychain"}},
         }
 
     @pytest.mark.parametrize(
@@ -71,7 +71,7 @@ class TestAdd:
             {
                 "current": None,
                 "envs": {},
-                "users": {"other-username": {"credential_manager": "keychain"}},
+                "users": {"other-username": {"credentials_manager": "keychain"}},
             },
         ),
         indirect=True,
@@ -197,8 +197,8 @@ class TestSet:
                     "envname": {"url": "old.com", "user": "old-user"},
                 },
                 "users": {
-                    "old-user": {"credential_manager": "keychain"},
-                    "new-user": {"credential_manager": "keychain"},
+                    "old-user": {"credentials_manager": "keychain"},
+                    "new-user": {"credentials_manager": "keychain"},
                 },
             },
         ),
@@ -216,8 +216,8 @@ class TestSet:
             "current": None,
             "envs": result,
             "users": {
-                "old-user": {"credential_manager": "keychain"},
-                "new-user": {"credential_manager": "keychain"},
+                "old-user": {"credentials_manager": "keychain"},
+                "new-user": {"credentials_manager": "keychain"},
             },
         }
 
@@ -267,7 +267,7 @@ class TestSet:
                 "envs": {
                     "envname": {"url": "old.com", "user": "old-user"},
                 },
-                "users": {"old-user": {"credential_manager": "keychain"}},
+                "users": {"old-user": {"credentials_manager": "keychain"}},
             },
         ),
         indirect=True,
