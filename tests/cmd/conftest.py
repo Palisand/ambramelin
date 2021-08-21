@@ -5,12 +5,14 @@ import pytest
 from _pytest.fixtures import SubRequest
 from pytest_mock import MockerFixture
 
+from ambramelin.util import config as util_config
 from ambramelin.util.config import Config, get_empty_config
+from ambra_sdk import api
 
 
 @pytest.fixture(autouse=True)
 def mock_api(mocker: MockerFixture) -> MagicMock:
-    return mocker.patch("ambra_sdk.api.Api")
+    return mocker.patch.object(api, "Api")
 
 
 @pytest.fixture(autouse=True)
@@ -20,15 +22,13 @@ def config(mocker: MockerFixture, request: SubRequest) -> Config:
     except AttributeError:
         _config = get_empty_config()
 
-    mocker.patch(
-        "ambramelin.util.config.load_config", return_value=copy.deepcopy(_config)
-    )
+    mocker.patch.object(util_config, "load_config", return_value=copy.deepcopy(_config))
 
     def save_config(config: Config) -> None:
         nonlocal _config
         _config.update(**config)
 
-    mocker.patch("ambramelin.util.config.save_config", new=save_config)
+    mocker.patch.object(util_config, "save_config", new=save_config)
 
     return _config
 

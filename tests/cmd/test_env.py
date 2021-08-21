@@ -3,7 +3,7 @@ import argparse
 import pytest
 from pytest_mock import MockerFixture
 
-from ambramelin.cmd.env import cmd_add, cmd_current, cmd_del, cmd_list, cmd_set, cmd_use
+from ambramelin.cmd import env
 from ambramelin.util.config import Config
 from ambramelin.util.errors import (
     EnvironmentAlreadyExistsError,
@@ -18,7 +18,7 @@ from ambramelin.util.output import MSG_NO_ENV_SELECTED, MSG_NO_ENVS_ADDED
 class TestAdd:
 
     def test_success(self, config: Config) -> None:
-        result = cmd_add(argparse.Namespace(name="envname", url="ambra.com", user=None))
+        result = env.cmd_add(argparse.Namespace(name="envname", url="ambra.com", user=None))
         assert result == {"envname": {"url": "ambra.com", "user": None}}
         assert config == {"current": None, "envs": result, "users": {}}
 
@@ -34,7 +34,7 @@ class TestAdd:
         indirect=True,
     )
     def test_success_with_user(self, config: Config) -> None:
-        result = cmd_add(
+        result = env.cmd_add(
             argparse.Namespace(name="envname", url="ambra.com", user="username")
         )
         assert result == {"envname": {"url": "ambra.com", "user": "username"}}
@@ -57,11 +57,11 @@ class TestAdd:
     )
     def test_failure_env_exists(self, config: Config) -> None:
         with pytest.raises(EnvironmentAlreadyExistsError):
-            cmd_add(argparse.Namespace(name="envname", url="ambra.com", user=None))
+            env.cmd_add(argparse.Namespace(name="envname", url="ambra.com", user=None))
 
     def test_failure_no_users(self) -> None:
         with pytest.raises(NoUsersError):
-            cmd_add(
+            env.cmd_add(
                 argparse.Namespace(name="envname", url="ambra.com", user="username")
             )
 
@@ -78,7 +78,7 @@ class TestAdd:
     )
     def test_failure_user_not_found(self, config: Config) -> None:
         with pytest.raises(UserNotFoundError):
-            cmd_add(
+            env.cmd_add(
                 argparse.Namespace(name="envname", url="ambra.com", user="username")
             )
 
@@ -93,8 +93,8 @@ class TestCurrent:
         ),
     )
     def test_success(self, mocker: MockerFixture, config: Config, result: str) -> None:
-        mocker.patch("ambramelin.cmd.env.load_config", return_value=config)
-        assert cmd_current(argparse.Namespace()) == result
+        mocker.patch.object(env, "load_config", return_value=config)
+        assert env.cmd_current(argparse.Namespace()) == result
 
 
 class TestDel:
@@ -111,7 +111,7 @@ class TestDel:
         indirect=True,
     )
     def test_success(self, config: Config) -> None:
-        cmd_del(argparse.Namespace(name="env1"))
+        env.cmd_del(argparse.Namespace(name="env1"))
         assert config == {
             "current": None,
             "envs": {"env2": {}},
@@ -120,7 +120,7 @@ class TestDel:
 
     def test_failure_no_envs_added(self) -> None:
         with pytest.raises(NoEnvironmentsError):
-            cmd_del(argparse.Namespace(name="env"))
+            env.cmd_del(argparse.Namespace(name="env"))
 
     @pytest.mark.parametrize(
         "config",
@@ -135,7 +135,7 @@ class TestDel:
     )
     def test_failure_env_not_found(self, config: Config) -> None:
         with pytest.raises(EnvironmentNotFoundError):
-            cmd_del(argparse.Namespace(name="env"))
+            env.cmd_del(argparse.Namespace(name="env"))
 
 
 class TestList:
@@ -175,8 +175,8 @@ class TestList:
         )
     )
     def test_success(self, mocker: MockerFixture, config: Config, result: str) -> None:
-        mocker.patch("ambramelin.cmd.env.load_config", return_value=config)
-        assert cmd_list(argparse.Namespace()) == result
+        mocker.patch.object(env, "load_config", return_value=config)
+        assert env.cmd_list(argparse.Namespace()) == result
 
 
 class TestSet:
@@ -205,7 +205,7 @@ class TestSet:
         indirect=True
     )
     def test_success(self, config: Config, args: dict) -> None:
-        result = cmd_set(argparse.Namespace(name="envname", **args))
+        result = env.cmd_set(argparse.Namespace(name="envname", **args))
         assert result == {
             "envname": {
                 "url": args["url"] or "old.com",
@@ -223,7 +223,7 @@ class TestSet:
 
     def test_failure_no_envs_added(self) -> None:
         with pytest.raises(NoEnvironmentsError):
-            cmd_set(argparse.Namespace(name="env"))
+            env.cmd_set(argparse.Namespace(name="env"))
 
     @pytest.mark.parametrize(
         "config",
@@ -238,7 +238,7 @@ class TestSet:
     )
     def test_failure_env_not_found(self, config: Config) -> None:
         with pytest.raises(EnvironmentNotFoundError):
-            cmd_set(argparse.Namespace(name="env"))
+            env.cmd_set(argparse.Namespace(name="env"))
 
     @pytest.mark.parametrize(
         "config",
@@ -255,7 +255,7 @@ class TestSet:
     )
     def test_failure_no_users(self, config: Config) -> None:
         with pytest.raises(NoUsersError):
-            cmd_set(
+            env.cmd_set(
                 argparse.Namespace(name="envname", url="ambra.com", user="username")
             )
 
@@ -274,7 +274,7 @@ class TestSet:
     )
     def test_failure_user_not_found(self, config: Config) -> None:
         with pytest.raises(UserNotFoundError):
-            cmd_set(
+            env.cmd_set(
                 argparse.Namespace(name="envname", url="ambra.com", user="username")
             )
 
@@ -294,7 +294,7 @@ class TestUse:
         indirect=True
     )
     def test_success(self, config: Config) -> None:
-        cmd_use(argparse.Namespace(name="envname"))
+        env.cmd_use(argparse.Namespace(name="envname"))
         assert config == {
             "current": "envname",
             "envs": {
@@ -305,7 +305,7 @@ class TestUse:
 
     def test_failure_no_envs_added(self) -> None:
         with pytest.raises(NoEnvironmentsError):
-            cmd_use(argparse.Namespace(name="env"))
+            env.cmd_use(argparse.Namespace(name="env"))
 
     @pytest.mark.parametrize(
         "config",
@@ -320,4 +320,4 @@ class TestUse:
     )
     def test_failure_env_not_found(self, config: Config) -> None:
         with pytest.raises(EnvironmentNotFoundError):
-            cmd_use(argparse.Namespace(name="env"))
+            env.cmd_use(argparse.Namespace(name="env"))

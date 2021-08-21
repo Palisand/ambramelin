@@ -50,19 +50,15 @@ filter_params = (
 @pytest.fixture(autouse=True)
 def mock_api(mocker: MockerFixture) -> MagicMock:
     api = MagicMock()
-    mocker.patch("ambramelin.cmd.study.get_api", return_value=api)
+    mocker.patch.object(study, "get_api", return_value=api)
     return api
 
 
 @pytest.fixture(autouse=True)
-def mock_pprint_json(mocker: MockerFixture) -> None:
-    mocker.patch("ambramelin.cmd.study.pprint_json")
-
-
-@pytest.fixture(autouse=True)
 def mock_get_storage_args(mocker: MockerFixture) -> MagicMock:
-    return mocker.patch(
-        "ambramelin.cmd.study._get_storage_args",
+    return mocker.patch.object(
+        study,
+        "_get_storage_args",
         return_value=("engine_fqdn", "storage_namespace", "study_uuid"),
     )
 
@@ -156,9 +152,10 @@ class TestGet:
         fields: Optional[str],
     ) -> None:
         uuid = str(uuid4())
-        study.cmd_get(argparse.Namespace(uuid=uuid, fields=fields_arg))
+        result = study.cmd_get(argparse.Namespace(uuid=uuid, fields=fields_arg))
         mock_api.Study.get.assert_called_once_with(uuid=uuid, fields=fields)
         mock_api.Study.get().get.assert_called_once_with()
+        assert result == mock_api.Study.get().get()
 
 
 class TestList:
@@ -228,7 +225,7 @@ class TestSchema:
         attachments_only: bool,
     ) -> None:
         uuid = str(uuid4())
-        study.cmd_schema(
+        result = study.cmd_schema(
             argparse.Namespace(
                 uuid=uuid, extended=extended, attachments_only=attachments_only
             )
@@ -241,3 +238,4 @@ class TestSchema:
             extended=int(extended),
             attachments_only=int(attachments_only),
         )
+        assert result == mock_api.Storage.Study.schema()

@@ -9,7 +9,6 @@ from ambra_sdk.service.query import QueryOF
 
 from ambramelin.util.errors import InvalidFilterConditionError
 from ambramelin.util.input import bool_prompt
-from ambramelin.util.output import pprint_json
 from ambramelin.util.sdk import get_api
 
 
@@ -71,13 +70,11 @@ def cmd_download(args: argparse.Namespace) -> None:
     print()  # ensure 'bytes downloaded' shown after loop completion
 
 
-def cmd_get(args: argparse.Namespace) -> None:
+def cmd_get(args: argparse.Namespace) -> dict:
     api = get_api()
-    pprint_json(
-        api.Study.get(
-            uuid=args.uuid, fields=args.fields and json.dumps(args.fields)
-        ).get()
-    )
+    return api.Study.get(
+        uuid=args.uuid, fields=args.fields and json.dumps(args.fields)
+    ).get()
 
 
 def cmd_list(args: argparse.Namespace) -> list:
@@ -99,12 +96,10 @@ def cmd_list(args: argparse.Namespace) -> list:
     return list(query.all())
 
 
-def cmd_schema(args: argparse.Namespace) -> None:
+def cmd_schema(args: argparse.Namespace) -> dict:
     api = get_api()
-    pprint_json(
-        api.Storage.Study.schema(
-            *_get_storage_args(api, args.uuid),
-            extended=int(args.extended),
-            attachments_only=int(args.attachments_only),
-        )
+    return api.Storage.Study.schema(
+        *_get_storage_args(api, args.uuid),
+        extended=int(args.extended),
+        attachments_only=int(args.attachments_only),
     )
