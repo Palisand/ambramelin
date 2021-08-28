@@ -113,9 +113,11 @@ def cli() -> None:
 
     parser_study_list = parser_study_subparsers.add_parser("list")
     parser_study_list.add_argument(
-        "filters", type=str, nargs="+", help="field.condition.value"
+        "--filters", type=str, nargs="+", help="field.condition.value"
     )
     parser_study_list.add_argument("--fields", type=str, nargs="+")
+    parser_study_list.add_argument("--min-row", type=int)
+    parser_study_list.add_argument("--max-row", type=int)
 
     parser_study_schema = parser_study_subparsers.add_parser("schema")
     parser_study_schema.add_argument("uuid", type=str)

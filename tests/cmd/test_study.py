@@ -10,7 +10,7 @@ from ambra_sdk.service.filtering import FilterCondition, Filter
 from pytest_mock import MockerFixture
 
 from ambramelin.cmd import study
-from ambramelin.util.errors import InvalidFilterConditionError
+from ambramelin.util.errors import InvalidFilterConditionError, InvalidArgumentsError
 
 filter_params = (
     "filters_arg,filters",
@@ -171,6 +171,12 @@ class TestList:
         )
     )
     @pytest.mark.parametrize(*filter_params)
+    @pytest.mark.parametrize(
+        "min_row_arg", (None, 5)
+    )
+    @pytest.mark.parametrize(
+        "max_row_arg", (None, 10)
+    )
     def test_success(
         self,
         mocker: MockerFixture,
@@ -179,38 +185,60 @@ class TestList:
         fields: Optional[str],
         filters_arg: Optional[tuple[str]],
         filters: list[Filter],
+        min_row_arg: Optional[int],
+        max_row_arg: Optional[int],
     ) -> None:
+
         if filters_arg is None:
             mock_query_list = MagicMock()
             mock_api.Study.list.return_value = mock_query_list
-            mock_query_list.all.return_value = ("unfiltered", "results")
+            mock_query_list.all.return_value = "unfiltered-results"
         else:
             mock_query = MagicMock()
             mocker.patch.object(
                 study, "_augment_query_with_filters", return_value=mock_query
             )
-            mock_query.all.return_value = ("filtered", "results")
+            mock_query.all.return_value = "filtered-results"
 
         result = study.cmd_list(
-            argparse.Namespace(fields=fields_arg, filters=filters_arg)
+            argparse.Namespace(
+                fields=fields_arg,
+                filters=filters_arg,
+                min_row=min_row_arg,
+                max_row=max_row_arg,
+            )
         )
 
         mock_api.Study.list.assert_called_once_with(fields=fields)
 
         if filters_arg is None:
-            assert result == ["unfiltered", "results"]
+            assert "".join(result) == 'unfiltered-results'[min_row_arg: max_row_arg]
         else:
             mock_api.Study.list().filter_by.mock_calls = [
                 mocker.call(f) for f in filters
             ]
-            assert result == ["filtered", "results"]
+            assert "".join(result) == 'filtered-results'[min_row_arg: max_row_arg]
 
     def test_failure_invalid_filter_condition(self, mocker: MockerFixture) -> None:
         mocker.patch.object(FilterCondition, "__init__", side_effect=ValueError)
 
         with pytest.raises(InvalidFilterConditionError):
             study.cmd_list(
-                argparse.Namespace(fields=None, filters=["field.cond.val"])
+                argparse.Namespace(
+                    fields=None,
+                    filters=["field.cond.val"],
+                    min_row=None,
+                    max_row=None,
+                )
+            )
+
+    @pytest.mark.parametrize("min_row,max_row", ((2, 1), (1, 1)))
+    def test_failure_invalid_row_bounds(self, min_row: int, max_row: int) -> None:
+        with pytest.raises(InvalidArgumentsError):
+            study.cmd_list(
+                argparse.Namespace(
+                    fields=None, filters=None, min_row=min_row, max_row=max_row
+                )
             )
 
 

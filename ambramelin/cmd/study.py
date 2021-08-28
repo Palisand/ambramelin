@@ -7,7 +7,7 @@ from ambra_sdk.api import Api
 from ambra_sdk.service.filtering import Filter, FilterCondition
 from ambra_sdk.service.query import QueryOF
 
-from ambramelin.util.errors import InvalidFilterConditionError
+from ambramelin.util.errors import InvalidFilterConditionError, InvalidArgumentsError
 from ambramelin.util.input import bool_prompt
 from ambramelin.util.sdk import get_api
 
@@ -33,7 +33,7 @@ def _augment_query_with_filters(query: QueryOF, query_filters: list[str]) -> Que
         if cond in {FilterCondition.in_condition, FilterCondition.in_or_null}:
             val = json.dumps(val.split(","))
 
-        query = query.filter_by(Filter(field, FilterCondition(cond), val))
+        query = query.filter_by(Filter(field, cond, val))
 
     return query
 
@@ -80,6 +80,19 @@ def cmd_get(args: argparse.Namespace) -> dict:
 def cmd_list(args: argparse.Namespace) -> list:
     api = get_api()
 
+    if args.min_row and args.max_row:
+        if args.min_row >= args.max_row:
+            raise InvalidArgumentsError("'max-row' must be greater than 'min-row'.")
+
+    if (args.filters or args.max_row) is None:
+        print(
+            "Not specifying 'filters' or 'max-row' will result in the fetching of "
+            "*all* studies."
+        )
+
+        if not bool_prompt("Do you wish to proceed?"):
+            sys.exit(0)
+
     if args.fields is None:
         print("Not specifying 'fields' may produce a lot of output.")
 
@@ -93,7 +106,7 @@ def cmd_list(args: argparse.Namespace) -> list:
     if args.filters is not None:
         query = _augment_query_with_filters(query, args.filters)
 
-    return list(query.all())
+    return list(query.all()[args.min_row: args.max_row])
 
 
 def cmd_schema(args: argparse.Namespace) -> dict:

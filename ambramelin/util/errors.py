@@ -51,3 +51,7 @@ class UserNotFoundError(AmbramelinError):
         super().__init__(
             f"User '{user}' not found. Must be one of {list(config['users'])}."
         )
+
+
+class InvalidArgumentsError(AmbramelinError):
+    pass
