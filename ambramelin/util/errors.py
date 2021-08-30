@@ -1,5 +1,6 @@
-from ambramelin.util.config import Config
 from ambra_sdk.service.filtering import FilterCondition
+
+from ambramelin.util.config import Config
 
 
 class AmbramelinError(Exception):

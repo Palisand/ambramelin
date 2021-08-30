@@ -7,8 +7,8 @@ from pytest_mock import MockerFixture
 from ambramelin.cmd import user
 from ambramelin.util.config import Config, Environment, User
 from ambramelin.util.errors import (
-    UserAlreadyExistsError,
     NoUsersError,
+    UserAlreadyExistsError,
     UserNotFoundError,
 )
 from ambramelin.util.output import (

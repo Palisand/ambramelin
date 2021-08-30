@@ -1,16 +1,16 @@
 import argparse
 from pathlib import Path
 from tempfile import TemporaryDirectory
-from typing import Optional, Iterator
+from typing import Iterator, Optional
 from unittest.mock import MagicMock
 from uuid import uuid4
 
 import pytest
-from ambra_sdk.service.filtering import FilterCondition, Filter
+from ambra_sdk.service.filtering import Filter, FilterCondition
 from pytest_mock import MockerFixture
 
 from ambramelin.cmd import study
-from ambramelin.util.errors import InvalidFilterConditionError, InvalidArgumentsError
+from ambramelin.util.errors import InvalidArgumentsError, InvalidFilterConditionError
 
 filter_params = (
     "filters_arg,filters",

@@ -1,13 +1,14 @@
 from unittest.mock import MagicMock
 
-import attr, cattr
+import attr
+import cattr
 import pytest
 from _pytest.fixtures import SubRequest
+from ambra_sdk import api
 from pytest_mock import MockerFixture
 
 from ambramelin.util import config as util_config
 from ambramelin.util.config import Config
-from ambra_sdk import api
 
 
 @pytest.fixture(autouse=True)

@@ -1,7 +1,7 @@
 import contextlib
 import json
 from pathlib import Path
-from typing import Optional, ContextManager
+from typing import ContextManager, Optional
 
 import attr
 import cattr

@@ -7,11 +7,11 @@ from ambramelin.util import credentials
 from ambramelin.util.config import (
     Config,
     User,
-    load_config,
     env_selected,
+    load_config,
     update_config,
-    users_added,
     user_exists,
+    users_added,
 )
 from ambramelin.util.errors import (
     NoUsersError,
@@ -20,8 +20,8 @@ from ambramelin.util.errors import (
 )
 from ambramelin.util.output import (
     MSG_NO_ENV_SELECTED,
-    MSG_NO_USERS_ADDED,
     MSG_NO_USER_FOR_CURR_ENV,
+    MSG_NO_USERS_ADDED,
 )
 
 

@@ -1,7 +1,6 @@
 import argparse
 import json
 import sys
-
 from importlib import import_module
 
 from ambramelin.util import credentials

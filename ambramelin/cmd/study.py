@@ -7,7 +7,7 @@ from ambra_sdk.api import Api
 from ambra_sdk.service.filtering import Filter, FilterCondition
 from ambra_sdk.service.query import QueryOF
 
-from ambramelin.util.errors import InvalidFilterConditionError, InvalidArgumentsError
+from ambramelin.util.errors import InvalidArgumentsError, InvalidFilterConditionError
 from ambramelin.util.input import bool_prompt
 from ambramelin.util.sdk import get_api
 
