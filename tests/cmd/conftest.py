@@ -40,8 +40,8 @@ def config(mocker: MockerFixture, request: SubRequest) -> Config:
     return _config
 
 
-# TODO: open pytest ticket
-#  modeled after https://docs.pytest.org/en/stable/example/simple.html#control-skipping-of-tests-according-to-command-line-option
+# TODO: open pytest ticket; modeled after
+#  https://docs.pytest.org/en/stable/example/simple.html#control-skipping-of-tests-according-to-command-line-option
 # def pytest_collection_modifyitems(config, items):
 #     for item in items:
 #         try:

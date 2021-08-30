@@ -54,7 +54,7 @@ def cli() -> None:
         type=str,
         default="keychain",
         choices=list(credentials.managers),
-        help=f"credentials manager",
+        help="credentials manager",
     )
 
     parser_user_subparsers.add_parser("current")
@@ -72,7 +72,7 @@ def cli() -> None:
         "--creds",
         type=str,
         choices=list(credentials.managers),
-        help=f"credentials manager",
+        help="credentials manager",
     )
     parser_user_set.add_argument("--passwd", action="store_true", help="password")
 
