@@ -5,7 +5,7 @@ import pytest
 from pytest_mock import MockerFixture
 
 from ambramelin.cmd import user
-from ambramelin.util.config import Config
+from ambramelin.util.config import Config, Environment, User
 from ambramelin.util.errors import (
     UserAlreadyExistsError,
     NoUsersError,
@@ -31,18 +31,12 @@ class TestAdd:
     ) -> None:
         result = user.cmd_add(argparse.Namespace(name="username", creds="dummy"))
         assert result == {"username": {"credentials_manager": "dummy"}}
-        assert config == {"current": None, "envs": {}, "users": result}
+        assert config == Config(users={"username": User(credentials_manager="dummy")})
         assert dummy_creds_manager.get_password("username") == "password"
 
     @pytest.mark.parametrize(
         "config",
-        (
-            {
-                "current": None,
-                "envs": {},
-                "users": {"username": {"credentials_manager": "dummy"}},
-            },
-        ),
+        (Config(users={"username": User(credentials_manager="dummy")}),),
         indirect=True,
     )
     def test_failure_user_exists(self, config: Config) -> None:
@@ -56,14 +50,20 @@ class TestCurrent:
         "config,result",
         (
             (
-                {"current": "envname", "envs": {"envname": {"user": "username"}}},
+                Config(
+                    current="envname",
+                    envs={"envname": Environment(url="", user="username")},
+                ),
                 "username",
             ),
             (
-                {"current": "envname", "envs": {"envname": {"user": None}}},
+                Config(
+                    current="envname",
+                    envs={"envname": Environment(url="", user=None)},
+                ),
                 MSG_NO_USER_FOR_CURR_ENV.format(env="envname"),
             ),
-            ({"current": None}, MSG_NO_ENV_SELECTED),
+            (Config(), MSG_NO_ENV_SELECTED),
         ),
     )
     def test_success(self, mocker: MockerFixture, config: Config, result: str) -> None:
@@ -76,15 +76,17 @@ class TestDel:
     @pytest.mark.parametrize(
         "config",
         (
-            {
-                "current": None,
-                "envs": {
-                    "env1": {"user": "user1"},
-                    "env2": {"user": "user2"},
-                    "env3": {"user": "user1"},
+            Config(
+                envs={
+                    "env1": Environment(url="", user="user1"),
+                    "env2": Environment(url="", user="user2"),
+                    "env3": Environment(url="", user="user1"),
                 },
-                "users": {"user1": {"credentials_manager": "dummy"}, "user2": {}},
-            },
+                users={
+                    "user1": User(credentials_manager="dummy"),
+                    "user2": User(credentials_manager="dummy"),
+                }
+            ),
         ),
         indirect=True,
     )
@@ -92,15 +94,16 @@ class TestDel:
         dummy_creds_manager.set_password("user1", "password")
         assert dummy_creds_manager.password_exists("user1")
         user.cmd_del(argparse.Namespace(name="user1"))
-        assert config == {
-            "current": None,
-            "envs": {
-                "env1": {"user": None},
-                "env2": {"user": "user2"},
-                "env3": {"user": None},
+        assert config == Config(
+            envs={
+                "env1": Environment(url="", user=None),
+                "env2": Environment(url="", user="user2"),
+                "env3": Environment(url="", user=None),
             },
-            "users": {"user2": {}}
-        }
+            users={
+                "user2": User(credentials_manager="dummy"),
+            }
+        )
         assert not dummy_creds_manager.password_exists("user1")
 
     def test_failure_no_users_added(self) -> None:
@@ -109,14 +112,8 @@ class TestDel:
 
     @pytest.mark.parametrize(
         "config",
-        (
-            {
-                "current": None,
-                "envs": {},
-                "users": {"other-user": {}}
-            },
-        ),
-        indirect=True
+        (Config(users={"other-user": User(credentials_manager="keychain")}),),
+        indirect=True,
     )
     def test_failure_user_not_found(self, config: Config) -> None:
         with pytest.raises(UserNotFoundError):
@@ -129,27 +126,30 @@ class TestList:
         "config,result",
         (
             (
-                {
-                    "current": None,
-                    "envs": {},
-                    "users": {"user1": {}, "user2": {}},
-                },
+                Config(
+                    users={
+                        "user1": User(credentials_manager="keychain"),
+                        "user2": User(credentials_manager="keychain")
+                    }
+                ),
                 "\n".join(("user1", "user2")),
             ),
             (
-                {
-                    "current": "env2",
-                    "envs": {
-                        "env1": {"user": "user1"},
-                        "env2": {"user": "user2"},
+                Config(
+                    current="env2",
+                    envs={
+                        "env1": Environment(url="", user="user1"),
+                        "env2": Environment(url="", user="user2"),
                     },
-                    "users": {"user1": {}, "user2": {}, "user3": {}},
-                },
+                    users={
+                        "user1": User(credentials_manager="keychain"),
+                        "user2": User(credentials_manager="keychain"),
+                        "user3": User(credentials_manager="keychain"),
+                    }
+                ),
                 "\n".join(("user1", "[CURRENT] user2", "user3")),
             ),
-            (
-                {"users": {}}, MSG_NO_USERS_ADDED
-            ),
+            (Config(), MSG_NO_USERS_ADDED),
         ),
     )
     def test_success(self, mocker: MockerFixture, config: Config, result: str) -> None:
@@ -168,13 +168,7 @@ class TestSet:
     )
     @pytest.mark.parametrize(
         "config",
-        (
-            {
-                "users": {
-                    "username": {"credentials_manager": "mock"}
-                }
-            },
-        ),
+        (Config(users={"username": User(credentials_manager="mock")}),),
         indirect=True
     )
     def test_success(
@@ -190,7 +184,9 @@ class TestSet:
                 "credentials_manager": args["creds"] or "mock"
             }
         }
-        assert config == {"users": result}
+        assert config == Config(
+            users={"username": User(credentials_manager=args["creds"] or "mock")}
+        )
 
         if args["creds"] is not None:
             mock_creds_manager.del_password.assert_called_once_with("username")
@@ -208,11 +204,7 @@ class TestSet:
 
     @pytest.mark.parametrize(
         "config",
-        (
-            {
-                "users": {"other-user": {}}
-            }
-        )
+        (Config(users={"other-user": User(credentials_manager="keychain")}),)
     )
     def test_failure_user_not_found(self, config: Config) -> None:
         with pytest.raises(UserNotFoundError):

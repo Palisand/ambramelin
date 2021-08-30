@@ -14,7 +14,7 @@ class EnvironmentAlreadyExistsError(AmbramelinError):
 class EnvironmentNotFoundError(AmbramelinError):
     def __init__(self, env: str, config: Config) -> None:
         super().__init__(
-            f"Environment '{env}' not found. Must be one of {list(config['envs'])}."
+            f"Environment '{env}' not found. Must be one of {list(config.envs)}."
         )
 
 
@@ -49,7 +49,7 @@ class UserAlreadyExistsError(AmbramelinError):
 class UserNotFoundError(AmbramelinError):
     def __init__(self, user: str, config: Config) -> None:
         super().__init__(
-            f"User '{user}' not found. Must be one of {list(config['users'])}."
+            f"User '{user}' not found. Must be one of {list(config.users)}."
         )
 
 

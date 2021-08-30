@@ -1,7 +1,10 @@
 import argparse
 
+import cattr
+
 from ambramelin.util.config import (
     Config,
+    Environment,
     load_config,
     envs_added,
     env_exists,
@@ -41,16 +44,16 @@ def cmd_add(args: argparse.Namespace) -> dict:
             if not user_exists(config, args.user):
                 raise UserNotFoundError(args.user, config)
 
-        config["envs"][args.name] = {"url": args.url, "user": args.user}
+        config.envs[args.name] = Environment(args.url, args.user)
 
-    return {args.name: config["envs"][args.name]}
+    return {args.name: cattr.unstructure(config.envs[args.name])}
 
 
 def cmd_current(_) -> str:
     config = load_config()
 
     if env_selected(config):
-        return config["current"]
+        return config.current
     else:
         return MSG_NO_ENV_SELECTED
 
@@ -60,10 +63,10 @@ def cmd_del(args: argparse.Namespace) -> None:
 
         _check_envs_added_and_env_exists(config, args.name)
 
-        del config["envs"][args.name]
+        del config.envs[args.name]
 
-        if config["current"] == args.name:
-            config["current"] = None
+        if config.current == args.name:
+            config.current = None
 
 
 def cmd_list(_) -> str:
@@ -72,9 +75,9 @@ def cmd_list(_) -> str:
     if envs_added(config):
         envs = []
 
-        for name, props in config["envs"].items():
-            prefix = "[CURRENT] " if config["current"] == name else ""
-            envs.append(f"{prefix}{name}: {props['url']}")
+        for name, env in config.envs.items():
+            prefix = "[CURRENT] " if config.current == name else ""
+            envs.append(f"{prefix}{name}: {env.url}")
 
         return "\n".join(envs)
     else:
@@ -87,7 +90,7 @@ def cmd_set(args: argparse.Namespace) -> dict:
         _check_envs_added_and_env_exists(config, args.name)
 
         if args.url is not None:
-            config["envs"][args.name]["url"] = args.url
+            config.envs[args.name].url = args.url
 
         if args.user is not None:
             if not users_added(config):
@@ -96,9 +99,9 @@ def cmd_set(args: argparse.Namespace) -> dict:
             if not user_exists(config, args.user):
                 raise UserNotFoundError(args.user, config)
 
-            config["envs"][args.name]["user"] = args.user
+            config.envs[args.name].user = args.user
 
-    return {args.name: config["envs"][args.name]}
+    return {args.name: cattr.unstructure(config.envs[args.name])}
 
 
 def cmd_use(args: argparse.Namespace) -> None:
@@ -106,4 +109,4 @@ def cmd_use(args: argparse.Namespace) -> None:
 
         _check_envs_added_and_env_exists(config, args.name)
 
-        config["current"] = args.name
+        config.current = args.name

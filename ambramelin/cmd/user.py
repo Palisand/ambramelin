@@ -1,9 +1,12 @@
 import argparse
 from getpass import getpass
 
+import cattr
+
 from ambramelin.util import credentials
 from ambramelin.util.config import (
     Config,
+    User,
     load_config,
     env_selected,
     update_config,
@@ -37,19 +40,19 @@ def cmd_add(args: argparse.Namespace) -> dict:
             raise UserAlreadyExistsError(args.name)
 
         credentials.managers[args.creds].set_password(args.name, getpass())
-        config["users"][args.name] = {"credentials_manager": args.creds}
+        config.users[args.name] = User(args.creds)
 
-    return {args.name: config["users"][args.name]}
+    return {args.name: cattr.unstructure(config.users[args.name])}
 
 
 def cmd_current(_) -> str:
     config = load_config()
 
     if env_selected(config):
-        if user := config["envs"][config["current"]]["user"]:
+        if user := config.envs[config.current].user:
             return user
         else:
-            return MSG_NO_USER_FOR_CURR_ENV.format(env=config["current"])
+            return MSG_NO_USER_FOR_CURR_ENV.format(env=config.current)
     else:
         return MSG_NO_ENV_SELECTED
 
@@ -60,14 +63,14 @@ def cmd_del(args: argparse.Namespace) -> None:
         _check_users_added_and_user_exists(config, args.name)
 
         cred_manager = credentials.managers[
-            config["users"][args.name]["credentials_manager"]
+            config.users[args.name].credentials_manager
         ]
         cred_manager.del_password(args.name)
-        del config["users"][args.name]
+        del config.users[args.name]
 
-        for name, props in config["envs"].items():
-            if props["user"] == args.name:
-                config["envs"][name]["user"] = None
+        for name, env in config.envs.items():
+            if env.user == args.name:
+                config.envs[name].user = None
 
 
 def cmd_list(_) -> str:
@@ -76,8 +79,8 @@ def cmd_list(_) -> str:
     if users_added(config):
         users = []
 
-        for name in config["users"]:
-            if config["current"] and config["envs"][config["current"]]["user"] == name:
+        for name in config.users:
+            if config.current and config.envs[config.current].user == name:
                 prefix = "[CURRENT] "
             else:
                 prefix = ""
@@ -97,17 +100,17 @@ def cmd_set(args: argparse.Namespace) -> dict:
         if args.creds is not None:
             password = getpass()
             credentials.managers[
-                config["users"][args.name]["credentials_manager"]
+                config.users[args.name].credentials_manager
             ].del_password(args.name)
             credentials.managers[args.creds].set_password(args.name, password)
-            config["users"][args.name]["credentials_manager"] = args.creds
+            config.users[args.name].credentials_manager = args.creds
 
         elif args.passwd:
             password = getpass()
             cred_manager = credentials.managers[
-                config["users"][args.name]["credentials_manager"]
+                config.users[args.name].credentials_manager
             ]
             cred_manager.del_password(args.name)
             cred_manager.set_password(args.name, password)
 
-    return {args.name: config["users"][args.name]}
+    return {args.name: cattr.unstructure(config.users[args.name])}

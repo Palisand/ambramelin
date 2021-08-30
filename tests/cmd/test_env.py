@@ -4,7 +4,7 @@ import pytest
 from pytest_mock import MockerFixture
 
 from ambramelin.cmd import env
-from ambramelin.util.config import Config
+from ambramelin.util.config import Config, Environment, User
 from ambramelin.util.errors import (
     EnvironmentAlreadyExistsError,
     EnvironmentNotFoundError,
@@ -18,19 +18,17 @@ from ambramelin.util.output import MSG_NO_ENV_SELECTED, MSG_NO_ENVS_ADDED
 class TestAdd:
 
     def test_success(self, config: Config) -> None:
-        result = env.cmd_add(argparse.Namespace(name="envname", url="ambra.com", user=None))
+        result = env.cmd_add(
+            argparse.Namespace(name="envname", url="ambra.com", user=None)
+        )
         assert result == {"envname": {"url": "ambra.com", "user": None}}
-        assert config == {"current": None, "envs": result, "users": {}}
+        assert config == Config(
+            envs={"envname": Environment(url="ambra.com", user=None)}
+        )
 
     @pytest.mark.parametrize(
         "config",
-        (
-            {
-                "current": None,
-                "envs": {},
-                "users": {"username": {"credentials_manager": "keychain"}},
-            },
-        ),
+        (Config(users={"username": User(credentials_manager="keychain")}),),
         indirect=True,
     )
     def test_success_with_user(self, config: Config) -> None:
@@ -38,20 +36,15 @@ class TestAdd:
             argparse.Namespace(name="envname", url="ambra.com", user="username")
         )
         assert result == {"envname": {"url": "ambra.com", "user": "username"}}
-        assert config == {
-            "current": None,
-            "envs": result,
-            "users": {"username": {"credentials_manager": "keychain"}},
-        }
+        assert config == Config(
+            envs={"envname": Environment(url="ambra.com", user="username")},
+            users={"username": User(credentials_manager="keychain")},
+        )
 
     @pytest.mark.parametrize(
         "config",
         (
-            {
-                "current": None,
-                "envs": {"envname": {"url": "ambra.com", "user": None}},
-                "users": {},
-            },
+            Config(envs={"envname": Environment(url="ambra.com", user=None)},),
         ),
         indirect=True,
     )
@@ -67,13 +60,7 @@ class TestAdd:
 
     @pytest.mark.parametrize(
         "config",
-        (
-            {
-                "current": None,
-                "envs": {},
-                "users": {"other-username": {"credentials_manager": "keychain"}},
-            },
-        ),
+        (Config(users={"other-username": User(credentials_manager="keychain")}),),
         indirect=True,
     )
     def test_failure_user_not_found(self, config: Config) -> None:
@@ -88,8 +75,8 @@ class TestCurrent:
     @pytest.mark.parametrize(
         "config,result",
         (
-            ({"current": "envname"}, "envname"),
-            ({"current": None}, MSG_NO_ENV_SELECTED),
+            (Config(current="envname"), "envname"),
+            (Config(current=None), MSG_NO_ENV_SELECTED),
         ),
     )
     def test_success(self, mocker: MockerFixture, config: Config, result: str) -> None:
@@ -101,22 +88,14 @@ class TestDel:
 
     @pytest.mark.parametrize(
         "config",
-        (
-            {
-                "current": "env1",
-                "envs": {"env1": {}, "env2": {}},
-                "users": {},
-            },
-        ),
+        (Config(envs={"env1": Environment(url=""), "env2": Environment(url="")}),),
         indirect=True,
     )
     def test_success(self, config: Config) -> None:
         env.cmd_del(argparse.Namespace(name="env1"))
-        assert config == {
-            "current": None,
-            "envs": {"env2": {}},
-            "users": {},
-        }
+        assert config == Config(
+            current=None, envs={"env2": Environment(url="")}, users={}
+        )
 
     def test_failure_no_envs_added(self) -> None:
         with pytest.raises(NoEnvironmentsError):
@@ -124,13 +103,7 @@ class TestDel:
 
     @pytest.mark.parametrize(
         "config",
-        (
-            {
-                "current": None,
-                "envs": {"other-env": {}},
-                "users": {},
-            },
-        ),
+        (Config(envs={"other-env": Environment(url="")}),),
         indirect=True,
     )
     def test_failure_env_not_found(self, config: Config) -> None:
@@ -144,23 +117,23 @@ class TestList:
         "config,result",
         (
             (
-                {
-                    "current": None,
-                    "envs": {
-                        "env1": {"url": "url1"}, "env2": {"url": "url2"}
+                Config(
+                    envs={
+                        "env1": Environment(url="url1"),
+                        "env2": Environment(url="url2"),
                     },
-                },
+                ),
                 "\n".join(("env1: url1", "env2: url2"))
             ),
             (
-                {
-                    "current": "env2",
-                    "envs": {
-                        "env1": {"url": "url1"},
-                        "env2": {"url": "url2"},
-                        "env3": {"url": "url3"},
+                Config(
+                    current="env2",
+                    envs={
+                        "env1": Environment(url="url1"),
+                        "env2": Environment(url="url2"),
+                        "env3": Environment(url="url3"),
                     },
-                },
+                ),
                 "\n".join(
                     (
                         "env1: url1",
@@ -169,9 +142,7 @@ class TestList:
                     )
                 )
             ),
-            (
-                {"envs": {}}, MSG_NO_ENVS_ADDED
-            ),
+            (Config(), MSG_NO_ENVS_ADDED),
         )
     )
     def test_success(self, mocker: MockerFixture, config: Config, result: str) -> None:
@@ -191,16 +162,13 @@ class TestSet:
     @pytest.mark.parametrize(
         "config",
         (
-            {
-                "current": None,
-                "envs": {
-                    "envname": {"url": "old.com", "user": "old-user"},
+            Config(
+                envs={"envname": Environment(url="old.com", user="old-user")},
+                users={
+                    "old-user": User(credentials_manager="keychain"),
+                    "new-user": User(credentials_manager="keychain"),
                 },
-                "users": {
-                    "old-user": {"credentials_manager": "keychain"},
-                    "new-user": {"credentials_manager": "keychain"},
-                },
-            },
+            ),
         ),
         indirect=True
     )
@@ -212,14 +180,17 @@ class TestSet:
                 "user": args["user"] or "old-user",
             }
         }
-        assert config == {
-            "current": None,
-            "envs": result,
-            "users": {
-                "old-user": {"credentials_manager": "keychain"},
-                "new-user": {"credentials_manager": "keychain"},
+        assert config == Config(
+            envs={
+                "envname": Environment(
+                    url=args["url"] or "old.com", user=args["user"] or "old-user"
+                )
             },
-        }
+            users={
+                "old-user": User(credentials_manager="keychain"),
+                "new-user": User(credentials_manager="keychain"),
+            },
+        )
 
     def test_failure_no_envs_added(self) -> None:
         with pytest.raises(NoEnvironmentsError):
@@ -227,13 +198,7 @@ class TestSet:
 
     @pytest.mark.parametrize(
         "config",
-        (
-            {
-                "current": None,
-                "envs": {"other-env": {}},
-                "users": {},
-            },
-        ),
+        (Config(envs={"other-env": Environment(url="")}),),
         indirect=True,
     )
     def test_failure_env_not_found(self, config: Config) -> None:
@@ -242,15 +207,7 @@ class TestSet:
 
     @pytest.mark.parametrize(
         "config",
-        (
-            {
-                "current": None,
-                "envs": {
-                    "envname": {"url": "old.com", "user": None},
-                },
-                "users": {},
-            },
-        ),
+        (Config(envs={"envname": Environment(url="old.com")}),),
         indirect=True
     )
     def test_failure_no_users(self, config: Config) -> None:
@@ -262,13 +219,10 @@ class TestSet:
     @pytest.mark.parametrize(
         "config",
         (
-            {
-                "current": None,
-                "envs": {
-                    "envname": {"url": "old.com", "user": "old-user"},
-                },
-                "users": {"old-user": {"credentials_manager": "keychain"}},
-            },
+            Config(
+                envs={"envname": Environment(url="old.com", user="old-user")},
+                users={"old-user": User(credentials_manager="keychain")}
+            ),
         ),
         indirect=True,
     )
@@ -282,26 +236,14 @@ class TestSet:
 class TestUse:
     @pytest.mark.parametrize(
         "config",
-        (
-            {
-                "current": None,
-                "envs": {
-                    "envname": {"url": "old.com", "user": None},
-                },
-                "users": {},
-            },
-        ),
+        (Config(envs={"envname": Environment(url="old.com")}),),
         indirect=True
     )
     def test_success(self, config: Config) -> None:
         env.cmd_use(argparse.Namespace(name="envname"))
-        assert config == {
-            "current": "envname",
-            "envs": {
-                "envname": {"url": "old.com", "user": None},
-            },
-            "users": {},
-        }
+        assert config == Config(
+            current="envname", envs={"envname": Environment(url="old.com")}
+        )
 
     def test_failure_no_envs_added(self) -> None:
         with pytest.raises(NoEnvironmentsError):
@@ -309,13 +251,7 @@ class TestUse:
 
     @pytest.mark.parametrize(
         "config",
-        (
-            {
-                "current": None,
-                "envs": {"other-env": {}},
-                "users": {},
-            },
-        ),
+        (Config(envs={"other-env": Environment(url="")}),),
         indirect=True,
     )
     def test_failure_env_not_found(self, config: Config) -> None:

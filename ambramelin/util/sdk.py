@@ -11,13 +11,11 @@ def get_api() -> Api:
     if not env_selected(config):
         raise NoEnvironmentSelectedError()
 
-    env = config["envs"][config["current"]]
-    cred_manager = credentials.managers[
-        config["users"][env["user"]]["credentials_manager"]
-    ]
+    env = config.envs[config.current]
+    cred_manager = credentials.managers[config.users[env.user].credentials_manager]
 
     return Api(
-        env["url"],
-        username=env["user"],
-        password=cred_manager.get_password(env["user"])
+        env.url,
+        username=env.user,
+        password=cred_manager.get_password(env.user)
     )

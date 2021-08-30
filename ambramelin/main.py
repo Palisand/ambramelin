@@ -12,8 +12,8 @@ from ambramelin.util.errors import AmbramelinError
 def cli() -> None:
     # TODO: auto-generate documentation
     config = load_config()
-    envs = tuple(config["envs"]) or None
-    users = tuple(config["users"]) or None
+    envs = tuple(config.envs) or None
+    users = tuple(config.users) or None
     parser = argparse.ArgumentParser()
     subparsers = parser.add_subparsers(dest="cmd")
 

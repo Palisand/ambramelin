@@ -2,6 +2,7 @@ import pytest
 from pytest_mock import MockerFixture
 
 from ambramelin.util import sdk
+from ambramelin.util.config import Config, Environment, User
 from ambramelin.util.errors import NoEnvironmentSelectedError
 from tests.conftest import DummyCredentialManager
 
@@ -14,11 +15,11 @@ class TestGetApi:
         mocker.patch.object(
             sdk,
             "load_config",
-            return_value={
-                "current": "envname",
-                "envs": {"envname": {"user": "username", "url": "envurl"}},
-                "users": {"username": {"credentials_manager": "dummy"}},
-            }
+            return_value=Config(
+                current="envname",
+                envs={"envname": Environment(url="envurl", user="username")},
+                users={"username": User(credentials_manager="dummy")},
+            )
         )
         mock_api = mocker.patch.object(sdk, "Api")
         result = sdk.get_api()
@@ -31,7 +32,7 @@ class TestGetApi:
         mocker.patch.object(
             sdk,
             "load_config",
-            return_value={"current": None},
+            return_value=Config(),
         )
 
         with pytest.raises(NoEnvironmentSelectedError):
