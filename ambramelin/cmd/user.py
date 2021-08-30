@@ -62,9 +62,7 @@ def cmd_del(args: argparse.Namespace) -> None:
 
         _check_users_added_and_user_exists(config, args.name)
 
-        cred_manager = credentials.managers[
-            config.users[args.name].credentials_manager
-        ]
+        cred_manager = credentials.managers[config.users[args.name].credentials_manager]
         cred_manager.del_password(args.name)
         del config.users[args.name]
 

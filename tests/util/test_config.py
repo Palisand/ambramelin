@@ -87,12 +87,13 @@ def test_env_selected(config: Config, result: bool) -> None:
     (
         ("env1", True),
         ("env2", False),
-    )
+    ),
 )
 def test_env_exists(env_name: str, result: bool) -> None:
-    assert util_config.env_exists(
-        Config(envs={"env1": Environment(url="")}), env_name
-    ) is result
+    assert (
+        util_config.env_exists(Config(envs={"env1": Environment(url="")}), env_name)
+        is result
+    )
 
 
 @pytest.mark.parametrize(
@@ -100,7 +101,7 @@ def test_env_exists(env_name: str, result: bool) -> None:
     (
         (Config(users={"user": User(credentials_manager="keychain")}), True),
         (Config(), False),
-    )
+    ),
 )
 def test_users_added(config: Config, result: bool) -> None:
     assert util_config.users_added(config) is result
@@ -111,9 +112,12 @@ def test_users_added(config: Config, result: bool) -> None:
     (
         ("user1", True),
         ("user2", False),
-    )
+    ),
 )
 def test_user_exists(user_name: str, result: bool) -> None:
-    assert util_config.user_exists(
-        Config(users={"user1": User(credentials_manager="keychain")}), user_name
-    ) is result
+    assert (
+        util_config.user_exists(
+            Config(users={"user1": User(credentials_manager="keychain")}), user_name
+        )
+        is result
+    )

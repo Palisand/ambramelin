@@ -10,7 +10,6 @@ class CredentialManagerError(AmbramelinError):
 
 
 class CredentialManager(ABC):
-
     @abstractmethod
     def get_password(self, account: str) -> Optional[str]:
         pass

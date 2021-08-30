@@ -42,8 +42,8 @@ filter_params = (
                 Filter("field", FilterCondition.equals, "val"),
                 Filter("field", FilterCondition.in_or_null, '["val1", "val2"]'),
             ),
-        )
-    )
+        ),
+    ),
 )
 
 
@@ -99,9 +99,7 @@ class TestCount:
         mocker.patch.object(FilterCondition, "__init__", side_effect=ValueError)
 
         with pytest.raises(InvalidFilterConditionError):
-            study.cmd_count(
-                argparse.Namespace(fields=None, filters=["field.cond.val"])
-            )
+            study.cmd_count(argparse.Namespace(fields=None, filters=["field.cond.val"]))
 
 
 class TestDownload:
@@ -143,7 +141,7 @@ class TestGet:
         (
             (None, None),
             (["field1", "field2"], '["field1", "field2"]'),
-        )
+        ),
     )
     def test_success(
         self,
@@ -168,15 +166,11 @@ class TestList:
         (
             (None, None),
             (["field1", "field2"], '["field1", "field2"]'),
-        )
+        ),
     )
     @pytest.mark.parametrize(*filter_params)
-    @pytest.mark.parametrize(
-        "min_row_arg", (None, 5)
-    )
-    @pytest.mark.parametrize(
-        "max_row_arg", (None, 10)
-    )
+    @pytest.mark.parametrize("min_row_arg", (None, 5))
+    @pytest.mark.parametrize("max_row_arg", (None, 10))
     def test_success(
         self,
         mocker: MockerFixture,
@@ -212,12 +206,12 @@ class TestList:
         mock_api.Study.list.assert_called_once_with(fields=fields)
 
         if filters_arg is None:
-            assert "".join(result) == 'unfiltered-results'[min_row_arg: max_row_arg]
+            assert "".join(result) == "unfiltered-results"[min_row_arg:max_row_arg]
         else:
             mock_api.Study.list().filter_by.mock_calls = [
                 mocker.call(f) for f in filters
             ]
-            assert "".join(result) == 'filtered-results'[min_row_arg: max_row_arg]
+            assert "".join(result) == "filtered-results"[min_row_arg:max_row_arg]
 
     def test_failure_invalid_filter_condition(self, mocker: MockerFixture) -> None:
         mocker.patch.object(FilterCondition, "__init__", side_effect=ValueError)

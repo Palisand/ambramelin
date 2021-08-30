@@ -15,8 +15,7 @@ from ambramelin.util.sdk import get_api
 def _get_storage_args(api: Api, uuid: str) -> tuple[str, str, str]:
     """Returns arguments necessary for performing Storage API requests."""
     study = api.Study.get(
-        uuid=uuid,
-        fields=json.dumps(["engine_fqdn", "storage_namespace", "study_uid"])
+        uuid=uuid, fields=json.dumps(["engine_fqdn", "storage_namespace", "study_uid"])
     ).get()
     return study["engine_fqdn"], study["storage_namespace"], study["study_uid"]
 
@@ -99,14 +98,12 @@ def cmd_list(args: argparse.Namespace) -> list:
         if not bool_prompt("Do you wish to proceed?"):
             sys.exit(0)
 
-    query = api.Study.list(
-        fields=args.fields and json.dumps(args.fields)
-    )
+    query = api.Study.list(fields=args.fields and json.dumps(args.fields))
 
     if args.filters is not None:
         query = _augment_query_with_filters(query, args.filters)
 
-    return list(query.all()[args.min_row: args.max_row])
+    return list(query.all()[args.min_row : args.max_row])
 
 
 def cmd_schema(args: argparse.Namespace) -> dict:

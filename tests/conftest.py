@@ -41,5 +41,5 @@ def mock_creds_managers_mapping(
     mocker.patch.object(
         credentials,
         "managers",
-        new={"dummy": dummy_creds_manager, "mock": mock_creds_manager}
+        new={"dummy": dummy_creds_manager, "mock": mock_creds_manager},
     )

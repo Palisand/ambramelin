@@ -19,7 +19,7 @@ class TestGetApi:
                 current="envname",
                 envs={"envname": Environment(url="envurl", user="username")},
                 users={"username": User(credentials_manager="dummy")},
-            )
+            ),
         )
         mock_api = mocker.patch.object(sdk, "Api")
         result = sdk.get_api()

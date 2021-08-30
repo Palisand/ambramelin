@@ -16,7 +16,6 @@ from ambramelin.util.output import MSG_NO_ENV_SELECTED, MSG_NO_ENVS_ADDED
 
 
 class TestAdd:
-
     def test_success(self, config: Config) -> None:
         result = env.cmd_add(
             argparse.Namespace(name="envname", url="ambra.com", user=None)
@@ -44,7 +43,9 @@ class TestAdd:
     @pytest.mark.parametrize(
         "config",
         (
-            Config(envs={"envname": Environment(url="ambra.com", user=None)},),
+            Config(
+                envs={"envname": Environment(url="ambra.com", user=None)},
+            ),
         ),
         indirect=True,
     )
@@ -71,7 +72,6 @@ class TestAdd:
 
 
 class TestCurrent:
-
     @pytest.mark.parametrize(
         "config,result",
         (
@@ -85,7 +85,6 @@ class TestCurrent:
 
 
 class TestDel:
-
     @pytest.mark.parametrize(
         "config",
         (Config(envs={"env1": Environment(url=""), "env2": Environment(url="")}),),
@@ -112,7 +111,6 @@ class TestDel:
 
 
 class TestList:
-
     @pytest.mark.parametrize(
         "config,result",
         (
@@ -123,7 +121,7 @@ class TestList:
                         "env2": Environment(url="url2"),
                     },
                 ),
-                "\n".join(("env1: url1", "env2: url2"))
+                "\n".join(("env1: url1", "env2: url2")),
             ),
             (
                 Config(
@@ -134,16 +132,10 @@ class TestList:
                         "env3": Environment(url="url3"),
                     },
                 ),
-                "\n".join(
-                    (
-                        "env1: url1",
-                        "[CURRENT] env2: url2",
-                        "env3: url3"
-                    )
-                )
+                "\n".join(("env1: url1", "[CURRENT] env2: url2", "env3: url3")),
             ),
             (Config(), MSG_NO_ENVS_ADDED),
-        )
+        ),
     )
     def test_success(self, mocker: MockerFixture, config: Config, result: str) -> None:
         mocker.patch.object(env, "load_config", return_value=config)
@@ -157,7 +149,7 @@ class TestSet:
             {"url": "new.com", "user": None},
             {"url": None, "user": "new-user"},
             {"url": "new.com", "user": "new-user"},
-        )
+        ),
     )
     @pytest.mark.parametrize(
         "config",
@@ -170,7 +162,7 @@ class TestSet:
                 },
             ),
         ),
-        indirect=True
+        indirect=True,
     )
     def test_success(self, config: Config, args: dict) -> None:
         result = env.cmd_set(argparse.Namespace(name="envname", **args))
@@ -206,9 +198,7 @@ class TestSet:
             env.cmd_set(argparse.Namespace(name="env"))
 
     @pytest.mark.parametrize(
-        "config",
-        (Config(envs={"envname": Environment(url="old.com")}),),
-        indirect=True
+        "config", (Config(envs={"envname": Environment(url="old.com")}),), indirect=True
     )
     def test_failure_no_users(self, config: Config) -> None:
         with pytest.raises(NoUsersError):
@@ -221,7 +211,7 @@ class TestSet:
         (
             Config(
                 envs={"envname": Environment(url="old.com", user="old-user")},
-                users={"old-user": User(credentials_manager="keychain")}
+                users={"old-user": User(credentials_manager="keychain")},
             ),
         ),
         indirect=True,
@@ -235,9 +225,7 @@ class TestSet:
 
 class TestUse:
     @pytest.mark.parametrize(
-        "config",
-        (Config(envs={"envname": Environment(url="old.com")}),),
-        indirect=True
+        "config", (Config(envs={"envname": Environment(url="old.com")}),), indirect=True
     )
     def test_success(self, config: Config) -> None:
         env.cmd_use(argparse.Namespace(name="envname"))

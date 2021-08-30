@@ -14,8 +14,4 @@ def get_api() -> Api:
     env = config.envs[config.current]
     cred_manager = credentials.managers[config.users[env.user].credentials_manager]
 
-    return Api(
-        env.url,
-        username=env.user,
-        password=cred_manager.get_password(env.user)
-    )
+    return Api(env.url, username=env.user, password=cred_manager.get_password(env.user))

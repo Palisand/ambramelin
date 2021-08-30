@@ -75,9 +75,7 @@ def cli() -> None:
         choices=list(credentials.managers),
         help=f"credentials manager",
     )
-    parser_user_set.add_argument(
-        "--passwd", action="store_true", help="password"
-    )
+    parser_user_set.add_argument("--passwd", action="store_true", help="password")
 
     # study
 
@@ -104,8 +102,8 @@ def cli() -> None:
         "--bundle",
         type=str,
         default="dicom",
-        choices=['dicom', 'iso', 'osx', 'win'],
-        help="bundle type"
+        choices=["dicom", "iso", "osx", "win"],
+        help="bundle type",
     )
     parser_study_download.add_argument(
         "--chunk-size", type=int, default=4096, help="chunk size in bytes"
@@ -140,9 +138,9 @@ def cli() -> None:
             print(e)
             sys.exit(1)
         else:
-            assert result is None or isinstance(result, (str, list, dict)), (
-                "cmd_* must return a str, list, dict, or None"
-            )
+            assert result is None or isinstance(
+                result, (str, list, dict)
+            ), "cmd_* must return a str, list, dict, or None"
 
             if isinstance(result, str):
                 print(result)

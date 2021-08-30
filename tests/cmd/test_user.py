@@ -25,7 +25,6 @@ def mock_getpass(mocker: MockerFixture) -> None:
 
 
 class TestAdd:
-
     def test_success(
         self, config: Config, dummy_creds_manager: DummyCredentialManager
     ) -> None:
@@ -45,7 +44,6 @@ class TestAdd:
 
 
 class TestCurrent:
-
     @pytest.mark.parametrize(
         "config,result",
         (
@@ -72,7 +70,6 @@ class TestCurrent:
 
 
 class TestDel:
-
     @pytest.mark.parametrize(
         "config",
         (
@@ -85,12 +82,14 @@ class TestDel:
                 users={
                     "user1": User(credentials_manager="dummy"),
                     "user2": User(credentials_manager="dummy"),
-                }
+                },
             ),
         ),
         indirect=True,
     )
-    def test_success(self, config: Config, dummy_creds_manager: DummyCredentialManager) -> None:
+    def test_success(
+        self, config: Config, dummy_creds_manager: DummyCredentialManager
+    ) -> None:
         dummy_creds_manager.set_password("user1", "password")
         assert dummy_creds_manager.password_exists("user1")
         user.cmd_del(argparse.Namespace(name="user1"))
@@ -102,7 +101,7 @@ class TestDel:
             },
             users={
                 "user2": User(credentials_manager="dummy"),
-            }
+            },
         )
         assert not dummy_creds_manager.password_exists("user1")
 
@@ -121,7 +120,6 @@ class TestDel:
 
 
 class TestList:
-
     @pytest.mark.parametrize(
         "config,result",
         (
@@ -129,7 +127,7 @@ class TestList:
                 Config(
                     users={
                         "user1": User(credentials_manager="keychain"),
-                        "user2": User(credentials_manager="keychain")
+                        "user2": User(credentials_manager="keychain"),
                     }
                 ),
                 "\n".join(("user1", "user2")),
@@ -145,7 +143,7 @@ class TestList:
                         "user1": User(credentials_manager="keychain"),
                         "user2": User(credentials_manager="keychain"),
                         "user3": User(credentials_manager="keychain"),
-                    }
+                    },
                 ),
                 "\n".join(("user1", "[CURRENT] user2", "user3")),
             ),
@@ -164,26 +162,22 @@ class TestSet:
             {"creds": None, "passwd": True},
             {"creds": "dummy", "passwd": None},
             {"creds": "dummy", "passwd": True},
-        )
+        ),
     )
     @pytest.mark.parametrize(
         "config",
         (Config(users={"username": User(credentials_manager="mock")}),),
-        indirect=True
+        indirect=True,
     )
     def test_success(
         self,
         config: Config,
         args: dict,
         dummy_creds_manager: DummyCredentialManager,
-        mock_creds_manager: MagicMock
+        mock_creds_manager: MagicMock,
     ) -> None:
         result = user.cmd_set(argparse.Namespace(name="username", **args))
-        assert result == {
-            "username": {
-                "credentials_manager": args["creds"] or "mock"
-            }
-        }
+        assert result == {"username": {"credentials_manager": args["creds"] or "mock"}}
         assert config == Config(
             users={"username": User(credentials_manager=args["creds"] or "mock")}
         )
@@ -203,8 +197,7 @@ class TestSet:
             user.cmd_set(argparse.Namespace(name="user"))
 
     @pytest.mark.parametrize(
-        "config",
-        (Config(users={"other-user": User(credentials_manager="keychain")}),)
+        "config", (Config(users={"other-user": User(credentials_manager="keychain")}),)
     )
     def test_failure_user_not_found(self, config: Config) -> None:
         with pytest.raises(UserNotFoundError):
