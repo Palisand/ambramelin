@@ -71,7 +71,7 @@ class TestCount:
         mock_api: MagicMock,
         filters_arg: Optional[tuple[str]],
         filters: list[Filter],
-    ):
+    ) -> None:
         if filters_arg is None:
             mock_query_count = MagicMock()
             mock_api.Study.count.return_value = mock_query_count

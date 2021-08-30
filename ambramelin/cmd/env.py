@@ -49,10 +49,11 @@ def cmd_add(args: argparse.Namespace) -> dict:
     return {args.name: cattr.unstructure(config.envs[args.name])}
 
 
-def cmd_current(_) -> str:
+def cmd_current(_: argparse.Namespace) -> str:
     config = load_config()
 
     if env_selected(config):
+        assert config.current is not None
         return config.current
     else:
         return MSG_NO_ENV_SELECTED
@@ -69,7 +70,7 @@ def cmd_del(args: argparse.Namespace) -> None:
             config.current = None
 
 
-def cmd_list(_) -> str:
+def cmd_list(_: argparse.Namespace) -> str:
     config = load_config()
 
     if envs_added(config):

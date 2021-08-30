@@ -9,8 +9,8 @@ from ambramelin.util.credentials import CredentialManager
 
 
 class DummyCredentialManager(CredentialManager):
-    def __init__(self):
-        self._store = {}
+    def __init__(self) -> None:
+        self._store: dict[str, str] = {}
 
     def get_password(self, account: str) -> Optional[str]:
         return self._store.get(account)

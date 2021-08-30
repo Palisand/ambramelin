@@ -28,7 +28,7 @@ class TestGetApi:
         )
         assert result == mock_api()
 
-    def test_failure_no_env_selected(self, mocker: MockerFixture):
+    def test_failure_no_env_selected(self, mocker: MockerFixture) -> None:
         mocker.patch.object(
             sdk,
             "load_config",

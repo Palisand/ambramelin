@@ -45,10 +45,12 @@ def cmd_add(args: argparse.Namespace) -> dict:
     return {args.name: cattr.unstructure(config.users[args.name])}
 
 
-def cmd_current(_) -> str:
+def cmd_current(_: argparse.Namespace) -> str:
     config = load_config()
 
     if env_selected(config):
+        assert config.current is not None
+
         if user := config.envs[config.current].user:
             return user
         else:
@@ -71,7 +73,7 @@ def cmd_del(args: argparse.Namespace) -> None:
                 config.envs[name].user = None
 
 
-def cmd_list(_) -> str:
+def cmd_list(_: argparse.Namespace) -> str:
     config = load_config()
 
     if users_added(config):

@@ -1,3 +1,4 @@
+# type: ignore[arg-type]
 import argparse
 import json
 import sys

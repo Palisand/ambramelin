@@ -1,7 +1,8 @@
 import contextlib
 import json
+from collections.abc import Iterator
 from pathlib import Path
-from typing import ContextManager, Optional
+from typing import Optional
 
 import attr
 import cattr
@@ -49,7 +50,7 @@ def save_config(config: Config) -> None:
 
 
 @contextlib.contextmanager
-def update_config() -> ContextManager[Config]:
+def update_config() -> Iterator[Config]:
     config = load_config()
     yield config
     save_config(config)
