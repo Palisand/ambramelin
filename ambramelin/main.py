@@ -84,7 +84,7 @@ def cli() -> None:
 
     parser_study_count = parser_study_subparsers.add_parser("count")
     parser_study_count.add_argument(
-        "filters", type=str, nargs="+", help="field.condition.value"
+        "--filters", type=str, nargs="+", help="field.condition.value"
     )
 
     parser_study_get = parser_study_subparsers.add_parser("get")

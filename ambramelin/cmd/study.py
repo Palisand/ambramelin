@@ -42,7 +42,11 @@ def cmd_count(args: argparse.Namespace) -> str:
 
     query = api.Study.count()
 
-    if args.filters is not None:
+    if args.filters is None:
+        if not bool_prompt("Count *all* studies?"):
+            sys.exit(0)
+
+    else:
         query = _augment_query_with_filters(query, args.filters)
 
     return str(query.get()["count"])

@@ -63,6 +63,11 @@ def mock_get_storage_args(mocker: MockerFixture) -> MagicMock:
     )
 
 
+@pytest.fixture(autouse=True)
+def mock_bool_prompt(mocker: MockerFixture) -> None:
+    mocker.patch.object(study, "bool_prompt", return_value=True)
+
+
 class TestCount:
     @pytest.mark.parametrize(*filter_params)
     def test_success(
@@ -157,10 +162,6 @@ class TestGet:
 
 
 class TestList:
-    @pytest.fixture(autouse=True)
-    def mock_bool_prompt(self, mocker: MockerFixture) -> None:
-        mocker.patch.object(study, "bool_prompt", return_value=True)
-
     @pytest.mark.parametrize(
         "fields_arg,fields",
         (
